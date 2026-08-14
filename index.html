@@ -31,12 +31,31 @@
       user-select: none;
     }
 
+    #reset {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #222;
+      color: white;
+      border: 2px solid white;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    #reset:hover {
+      background: #444;
+    }
+
     #number {
       position: absolute;
       left: 50%;
       top: 50%;
       font-family: Arial, sans-serif;
-      font-size: 100px;
+      font-size: 12vw;
       font-weight: 900;
       color: white;
       user-select: none;
@@ -48,11 +67,13 @@
 <body>
 
   <div id="counter">Bounces: 0</div>
+  <button id="reset">Reset</button>
   <div id="number">21</div>
 
   <script>
     const number = document.getElementById("number");
     const counter = document.getElementById("counter");
+    const resetButton = document.getElementById("reset");
 
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
@@ -72,7 +93,20 @@
     const bounce = 0.75;
     const mouseRadius = 45;
 
-    const originalSize = 100;
+    // Base size is 12% of the smaller screen dimension
+    function getBaseSize() {
+      return Math.min(window.innerWidth, window.innerHeight) * 0.12;
+    }
+
+    function updateSize() {
+      const multiplier = Math.pow(
+        1.05,
+        Math.floor(bounceCount / 100)
+      );
+
+      number.style.fontSize =
+        `${getBaseSize() * multiplier}px`;
+    }
 
     document.addEventListener("mousemove", (event) => {
       mouseX = event.clientX;
@@ -82,12 +116,10 @@
     function addBounce() {
       bounceCount++;
 
-      // 5% bigger every 100 bounces
-      const multiplier = Math.pow(1.05, Math.floor(bounceCount / 100));
+      updateSize();
 
-      number.style.fontSize = `${originalSize * multiplier}px`;
-
-      counter.textContent = `Bounces: ${bounceCount}`;
+      counter.textContent =
+        `Bounces: ${bounceCount}`;
     }
 
     function randomLaunch() {
@@ -96,51 +128,90 @@
       rotationSpeed = (Math.random() - 0.5) * 12;
     }
 
+    resetButton.addEventListener("click", () => {
+      bounceCount = 0;
+
+      counter.textContent = "Bounces: 0";
+
+      updateSize();
+
+      x = window.innerWidth / 2;
+      y = window.innerHeight / 2;
+
+      rotation = 0;
+      rotationSpeed = 0;
+
+      randomLaunch();
+    });
+
     function animate() {
       const rect = number.getBoundingClientRect();
+
       const width = rect.width;
       const height = rect.height;
 
-      const numberRadius = Math.max(width, height) / 2;
+      const numberRadius =
+        Math.max(width, height) / 2;
 
       vy += gravity;
 
       x += vx;
       y += vy;
+
       rotation += rotationSpeed;
 
-      // Mouse collision
       const dx = x - mouseX;
       const dy = y - mouseY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
 
-      const collisionDistance = mouseRadius + numberRadius * 0.7;
+      const distance =
+        Math.sqrt(dx * dx + dy * dy);
 
-      if (distance < collisionDistance && distance > 0) {
+      const collisionDistance =
+        mouseRadius + numberRadius * 0.7;
+
+      if (
+        distance < collisionDistance &&
+        distance > 0
+      ) {
         const nx = dx / distance;
         const ny = dy / distance;
 
-        x = mouseX + nx * collisionDistance;
-        y = mouseY + ny * collisionDistance;
+        x =
+          mouseX +
+          nx * collisionDistance;
 
-        const velocityAlongNormal = vx * nx + vy * ny;
+        y =
+          mouseY +
+          ny * collisionDistance;
+
+        const velocityAlongNormal =
+          vx * nx + vy * ny;
 
         if (velocityAlongNormal < 0) {
-          vx -= 2 * velocityAlongNormal * nx;
-          vy -= 2 * velocityAlongNormal * ny;
+          vx -=
+            2 * velocityAlongNormal * nx;
+
+          vy -=
+            2 * velocityAlongNormal * ny;
 
           vx *= 1.15;
           vy *= 1.15;
 
-          rotationSpeed = (Math.random() - 0.5) * 15;
+          rotationSpeed =
+            (Math.random() - 0.5) * 15;
 
           addBounce();
         }
       }
 
-      // Floor
-      if (y + height / 2 >= window.innerHeight) {
-        y = window.innerHeight - height / 2;
+      if (
+        y + height / 2 >=
+        window.innerHeight
+      ) {
+        y =
+          window.innerHeight -
+          height / 2;
+
         vy *= -bounce;
         vx *= 0.98;
 
@@ -151,26 +222,36 @@
         }
       }
 
-      // Ceiling
       if (y - height / 2 <= 0) {
         y = height / 2;
+
         vy *= -0.8;
+
         addBounce();
       }
 
-      // Left wall
       if (x - width / 2 <= 0) {
         x = width / 2;
+
         vx *= -0.85;
+
         rotationSpeed *= -1;
+
         addBounce();
       }
 
-      // Right wall
-      if (x + width / 2 >= window.innerWidth) {
-        x = window.innerWidth - width / 2;
+      if (
+        x + width / 2 >=
+        window.innerWidth
+      ) {
+        x =
+          window.innerWidth -
+          width / 2;
+
         vx *= -0.85;
+
         rotationSpeed *= -1;
+
         addBounce();
       }
 
@@ -183,13 +264,23 @@
       requestAnimationFrame(animate);
     }
 
+    window.addEventListener("resize", () => {
+      x = Math.min(
+        x,
+        window.innerWidth
+      );
+
+      y = Math.min(
+        y,
+        window.innerHeight
+      );
+
+      updateSize();
+    });
+
+    updateSize();
     randomLaunch();
     animate();
-
-    window.addEventListener("resize", () => {
-      x = Math.min(x, window.innerWidth);
-      y = Math.min(y, window.innerHeight);
-    });
   </script>
 
 </body>
